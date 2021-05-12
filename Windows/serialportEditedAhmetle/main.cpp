@@ -101,11 +101,15 @@ int readData(char *buffer, unsigned int nbChar)
            // a b c 9999
             do
             {
-                short int message[3];
+                short int message[4];
 
                 ReadFile(hSerial, &message, sizeof(message), &bytesRead, 0);
                 //printf("%i %i %i\n", message[0], message[1], message[2]);
                 moveMouse(message[0],-message[1]);
+                if(message[3] == 1){
+                    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+                }
+                mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
                 
 
             } while (bytesRead > 0);
@@ -122,7 +126,7 @@ int main()
 
     char *buffer = new char[1];
     int nbChar = 1;
-    string str = "COM7"; // Use your port number to connect
+    string str = "COM8"; // Use your port number to connect
 
     char *writable = new char[str.size() + 1];
     std::copy(str.begin(), str.end(), writable);
