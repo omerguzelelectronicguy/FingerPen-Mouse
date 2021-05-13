@@ -64,8 +64,6 @@ VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measure
 VectorFloat gravity;    // [x, y, z]            gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
-const int buttonPin = 4;
-int buttonState = 0;
 
 // ================================================================
 // ===               INTERRUPT DETECTION ROUTINE                ===
@@ -174,28 +172,29 @@ void setup() {
 // ================================================================
 // ===                    MAIN PROGRAM LOOP                     ===
 // ================================================================
-
+const int buttonPin = 4;
+int buttonState = 0;
+bool lastButtonState=0;
+bool change=0;
 void loop() {
   
     buttonState = digitalRead(buttonPin);
+    if(buttonState){
+        digitalWrite(LED_PIN, HIGH);
+    }else{
+        digitalWrite(LED_PIN, LOW);
+        }
+    if(buttonState!=lastButtonState){
+      change=1;
+      lastButtonState=buttonState;
+    }else{
+      change=0;
+    }
+    
     // if programming failed, don't try to do anything
     if (!dmpReady) return;
     // read a packet from FIFO
     if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) { // Get the Latest packet 
-        #ifdef OUTPUT_READABLE_REALACCEL
-            // display real acceleration, adjusted to remove gravity
-            mpu.dmpGetQuaternion(&q, fifoBuffer);
-            mpu.dmpGetAccel(&aa, fifoBuffer);
-            mpu.dmpGetGravity(&gravity, &q);
-            mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
-            Serial.print("areal\t");
-            Serial.print(aaReal.x);
-            Serial.print("\t");
-            Serial.print(aaReal.y);
-            Serial.print("\t");
-            Serial.println(aaReal.z);
-        #endif
-
         #ifdef OUTPUT_READABLE_WORLDACCEL
             // display initial world-frame acceleration, adjusted to remove gravity
             // and rotated based on known orientation from quaternion
@@ -205,21 +204,9 @@ void loop() {
             mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
             mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
 
-
-            
-          /*  Serial.print("aworld\t");
-            Serial.print(aaWorld.x/10);
-            Serial.print("\t");
-            Serial.print(aaWorld.y/10);
-            Serial.print("\t");
-            Serial.println(aaWorld.z/10);// --------------------------Bu kısım Düzenlenecek--------------------------------------//
-          */  
             const int threshold = 10;
-            if ((IsStop(aaWorld.x/10,threshold)&&IsStop(aaWorld.y/10,threshold))||buttonState==1 ) {
-              vx = 0;
-              vy = 0;
-              vz = 0;
-            } else  {
+            if (!(IsStop(aaWorld.x/10,threshold)&&IsStop(aaWorld.y/10,threshold))||change==1 ) 
+            {
               vx = vx + aaWorld.x/15;
               vy = vy + aaWorld.y /15;
               vz = vz + aaWorld.z /15;
@@ -228,11 +215,11 @@ void loop() {
               //Serial.print(aaWorld.x); Serial.print("\t");
               //Serial.print(aaWorld.y); Serial.print("\t\n"); 
               //Serial.print(az); Serial.print("\n");
+            } else  {
+              vx = 0;
+              vy = 0;
+              vz = 0;
             }
         #endif
-    
-        // blink LED to indicate activity
-        blinkState = !blinkState;
-        digitalWrite(LED_PIN, blinkState);
     }
 }
