@@ -10,11 +10,13 @@ HANDLE hSerial;
 bool connected;
 COMSTAT status;
 
-void moveMouse(int movex, int movey)
+void moveMouse(int movex, int movey)//Created function to move cursor.
 {
     POINT p;
     GetCursorPos(&p);
+    // it is to determine the cursor position
     SetCursorPos(movex+p.x, movey+p.y);
+    // the coming values from arduino added to the current position values.
     //Sleep(1); //çalışmazsa bir dene
 }
 
@@ -101,28 +103,17 @@ int readData(char *buffer, unsigned int nbChar)
             do
             {
                 short int message[4];
-<<<<<<< Updated upstream
-=======
                 // container for coming message from arduino
                 // 3 messages include x y z velocity vector.
->>>>>>> Stashed changes
 
                 ReadFile(hSerial, &message, sizeof(message), &bytesRead, 0);
                 // the size of (3*short int) is read, then written on message array
                 // change the bytesRead according to the resting data.
                 //printf("%i %i %i\n", message[0], message[1], message[2]);
-<<<<<<< Updated upstream
-                moveMouse(message[0],-message[1]);
-                if(message[3] == 1){
-                    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
-                }
-                mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
-                
-
-=======
                 //printf("%i\n",message[3]);
                 moveMouse(message[0]/10,-message[1]/10);
                 // call the function to move cursor.
+                
                 if(message[3] == 1){
                     mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
                     pressed=1;
@@ -132,7 +123,6 @@ int readData(char *buffer, unsigned int nbChar)
                         mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
                     }
                 }
->>>>>>> Stashed changes
             } while (bytesRead > 0);
             
         }
@@ -146,12 +136,8 @@ int main()
 
     char *buffer = new char[1];
     int nbChar = 1;
-<<<<<<< Updated upstream
-    string str = "COM8"; // Use your port number to connect
-=======
     string str = "COM7"; // Use your port number to connect
     // This COM7 might be changed. At the end it must be automated for arduino
->>>>>>> Stashed changes
 
     char *writable = new char[str.size() + 1];
     std::copy(str.begin(), str.end(), writable);
@@ -161,19 +147,4 @@ int main()
     delete[] writable;
     readData(buffer, nbChar);
     return 0;
-<<<<<<< Updated upstream
 }
-
-/*
-
-void gotoXY(int x, int y) 
-{ 
-CursorPosition.X = x; 
-CursorPosition.Y = y; 
-SetConsoleCursorPosition(console,CursorPosition); 
-}
-
-*/
-=======
-}
->>>>>>> Stashed changes

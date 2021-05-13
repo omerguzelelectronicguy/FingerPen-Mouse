@@ -15,6 +15,7 @@ bool IsStop(int vx,int thresh){         //This is to return whether mouse is mov
   return (vx<thresh && vx>-thresh);
 }
 int vx=0,vy=0,vz=0;
+const int buttonPin = 4;
 //===============================================
 // class default I2C address is 0x68
 // specific I2C addresses may be passed as a parameter here
@@ -46,7 +47,6 @@ MPU6050 mpu;
 
 #define INTERRUPT_PIN 2  // use pin 2 on Arduino Uno & most boards
 #define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
-bool blinkState = false;
 
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
@@ -121,10 +121,10 @@ void setup() {
     devStatus = mpu.dmpInitialize();
 
     // supply your own gyro offsets here, scaled for min sensitivity
-    mpu.setXGyroOffset(220);
-    mpu.setYGyroOffset(76);
-    mpu.setZGyroOffset(-85);
-    mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
+    mpu.setXGyroOffset(-205);
+    mpu.setYGyroOffset(-101);
+    mpu.setZGyroOffset(35);
+    mpu.setZAccelOffset(1553); // 1688 factory default for my test chip
 
 
     // make sure it worked (returns 0 if so)
@@ -172,10 +172,10 @@ void setup() {
 // ================================================================
 // ===                    MAIN PROGRAM LOOP                     ===
 // ================================================================
-const int buttonPin = 4;
 int buttonState = 0;
 bool lastButtonState=0;
 bool change=0;
+
 void loop() {
   
     buttonState = digitalRead(buttonPin);
@@ -184,6 +184,7 @@ void loop() {
     }else{
         digitalWrite(LED_PIN, LOW);
         }
+        
     if(buttonState!=lastButtonState){
       change=1;
       lastButtonState=buttonState;
