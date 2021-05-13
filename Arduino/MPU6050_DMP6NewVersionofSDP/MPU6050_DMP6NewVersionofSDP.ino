@@ -205,13 +205,14 @@ void loop() {
             mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
             mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
 
-            const int threshold = 10;
-            if (!(IsStop(aaWorld.x/10,threshold)&&IsStop(aaWorld.y/10,threshold))||change==1 ) 
+            const int threshold = 50;
+            const int divider=200;
+            if (!(IsStop(aaWorld.x,threshold)&&IsStop(aaWorld.y,threshold))||change==1 ) 
             {
-              vx = vx + aaWorld.x/15;
-              vy = vy + aaWorld.y /15;
-              vz = vz + aaWorld.z /15;
-              int message[] = {vx/10, vy/10, vz/10, buttonState};
+              vx = vx + aaWorld.x/divider;
+              vy = vy + aaWorld.y/divider;
+              vz = vz + aaWorld.z/divider;
+              int message[] = {vx, vy, vz, buttonState};
               Serial.write((char*)&message, sizeof(message));
               //Serial.print(aaWorld.x); Serial.print("\t");
               //Serial.print(aaWorld.y); Serial.print("\t\n"); 

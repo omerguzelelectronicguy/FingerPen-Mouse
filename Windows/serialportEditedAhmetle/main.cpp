@@ -111,7 +111,7 @@ int readData(char *buffer, unsigned int nbChar)
                 // change the bytesRead according to the resting data.
                 //printf("%i %i %i\n", message[0], message[1], message[2]);
                 //printf("%i\n",message[3]);
-                moveMouse(message[0]/10,-message[1]/10);
+                moveMouse(message[0],-message[1]);
                 // call the function to move cursor.
                 
                 if(message[3] == 1){
