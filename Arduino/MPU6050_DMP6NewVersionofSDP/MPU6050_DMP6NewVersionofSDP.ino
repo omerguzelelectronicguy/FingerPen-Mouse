@@ -15,7 +15,7 @@ bool IsStop(int vx,int thresh){         //This is to return whether mouse is mov
   return (vx<thresh && vx>-thresh);
 }
 int vx=0,vy=0,vz=0;
-const int buttonPin = 4;
+const int buttonPin = 3;
 //===============================================
 // class default I2C address is 0x68
 // specific I2C addresses may be passed as a parameter here
