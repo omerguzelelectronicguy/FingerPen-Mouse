@@ -11,7 +11,8 @@
 #endif
 
 //===============================================
-bool IsStop(int vx,int thresh){         //This is to return whether mouse is moving or not.
+//This is to return whether mouse is moving or not.
+bool IsStop(int vx,int thresh){         
   return (vx<thresh && vx>-thresh);
 }
 int vx=0,vy=0,vz=0;
@@ -177,14 +178,16 @@ bool lastButtonState=0;
 bool change=0;
 
 void loop() {
-  
+    /*the led will be opened and closed according to the state of button
+      The reason is to see whether there is a problem or not.*/
     buttonState = digitalRead(buttonPin);
     if(buttonState){
         digitalWrite(LED_PIN, HIGH);
     }else{
         digitalWrite(LED_PIN, LOW);
         }
-        
+    /*we set the change 1 if there is any change of the state of the button.
+      if there is no any change of the state change will be 0*/    
     if(buttonState!=lastButtonState){
       change=1;
       lastButtonState=buttonState;
@@ -206,7 +209,15 @@ void loop() {
             mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
 
             const int threshold = 50;
+            /* Threshold is to set minimum movement value. 
+            If the values are less than threshold, means no movement*/
             const int divider=200;
+            // it is to scale the values from acceleration to pixel.
+
+            /*This if else is to determine the values and whether it will send values to computer or not. 
+              If button is pushed or pulled, change will be 1. if the acceleration values are more than 50,
+              it means there is motion. If any of this condition occurs arduino will send data to computer.
+              message contains the for values. and we are using serial.write to communicate with faster speed.*/
             if (!(IsStop(aaWorld.x,threshold)&&IsStop(aaWorld.y,threshold))||change==1 ) 
             {
               vx = vx + aaWorld.x/divider;
@@ -218,6 +229,8 @@ void loop() {
               //Serial.print(aaWorld.y); Serial.print("\t\n"); 
               //Serial.print(az); Serial.print("\n");
             } else  {
+              /* This else is to make all the velocity zero and if there is no movement,
+                 it won't send any value to the computer*/
               vx = 0;
               vy = 0;
               vz = 0;
