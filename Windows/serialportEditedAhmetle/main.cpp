@@ -2,6 +2,7 @@
 #include <string>
 #include <array>
 #include <stdio.h>
+
 #define ARDUINO_WAIT_TIME 2000
 using namespace std;
 
@@ -109,9 +110,9 @@ int readData(char *buffer, unsigned int nbChar)
                 ReadFile(hSerial, &message, sizeof(message), &bytesRead, 0);
                 // the size of (3*short int) is read, then written on message array
                 // change the bytesRead according to the resting data.
-                //printf("%i %i %i\n", message[0], message[1], message[2]);
+                printf("%i\t%i\n", message[0],message[1]);
                 //printf("%i\n",message[3]);
-                moveMouse(message[0],-message[1]);
+                moveMouse(-message[0],message[1]);
                 // call the function to move cursor.
                 
                 if(message[3] == 1){
