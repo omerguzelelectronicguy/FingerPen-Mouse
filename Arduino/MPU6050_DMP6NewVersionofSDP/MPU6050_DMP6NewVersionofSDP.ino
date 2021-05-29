@@ -183,12 +183,12 @@ int lastx = 0, lasty = 0, lastz = 0;
 const int divider = 400*Count;          // it is to scale the values from acceleration to pixel.
 
 void MAF() {
+  lastx = aaWorldArray[0][k];
+  lasty = aaWorldArray[1][k];
+  lastz = aaWorldArray[2][k];
   aaWorldArray[0][k] = aaWorld.x;
   aaWorldArray[1][k] = aaWorld.y;
   aaWorldArray[2][k] = aaWorld.z;
-  lastx = aaWorldArray[0][k != 0 ? (k - 1) : Count];
-  lasty = aaWorldArray[1][k != 0 ? (k - 1) : Count];
-  lastz = aaWorldArray[2][k != 0 ? (k - 1) : Count];
   k++;
   if (k >= Count)
     k = 0;
@@ -199,6 +199,7 @@ void MAF() {
   vx = vx + sumx / divider;
   vy = vy + sumy / divider;
   vz = vz + sumz / divider;
+  //Serial.print(vx);Serial.print(" ");Serial.println(vy);
 }
 
 //===============================================
@@ -262,6 +263,8 @@ void loop() {
       //int message2[] = {aaWorld.x,aaWorld.y};
       Serial.write((char*)&message, sizeof(message));
       //Serial.print(message[0]);Serial.println(message[1]);
+      //Serial.print(vx);Serial.print(" ");Serial.println(vy);
+
 
     } else  {
       /* This else is to make all the velocity zero and if there is no movement,
