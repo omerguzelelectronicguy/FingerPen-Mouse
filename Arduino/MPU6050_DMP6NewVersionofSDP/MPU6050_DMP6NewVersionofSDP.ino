@@ -158,7 +158,7 @@ void setup() {
   // configure LED for output
   pinMode(LED_PIN, OUTPUT);
   Serial.begin(115200);
-#define buttonPin 13
+#define buttonPin 3
   pinMode(buttonPin, INPUT);
 
 }
@@ -250,8 +250,6 @@ void loop() {
     const int threshold = 40;
     /* Threshold is to set minimum movement value.
       If the values are less than threshold, means no movement*/
-
-
 
     /*This if else is to determine the values and whether it will send values to computer or not.
       If button is pushed or pulled, change will be 1. if the acceleration values are more than 50,
