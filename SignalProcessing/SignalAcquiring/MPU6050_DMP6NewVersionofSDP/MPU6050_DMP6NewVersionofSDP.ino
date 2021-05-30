@@ -166,32 +166,44 @@ bool IsStop(int vx, int thresh) {
 }
 
 #define Count 4
-int aaWorldArray[3][Count]={0};
+int Array[3][3][Count]={0};
 
 int k = 0;
-float vx = 0, vy = 0, vz = 0;
-int sumx = 0, sumy = 0, sumz = 0;
-int lastx = 0, lasty = 0, lastz = 0;
+float v[3][3]={0}; //This contains the velocity for x y and z direction.
+int sum[3][3]={0}; //This contains the sum of acc. for x y and z direction.
+int tileofArr[3][3]={0}; //This contains the (Count) previus acc value for x y and z direction.
+
+
 const int divider = 400*Count;          // it is to scale the values from acceleration to pixel.
 
 void MAF() {
-  lastx = aaWorldArray[0][k];
-  lasty = aaWorldArray[1][k];
-  lastz = aaWorldArray[2][k];
-  aaWorldArray[0][k] = aaWorld.x;
-  aaWorldArray[1][k] = aaWorld.y;
-  aaWorldArray[2][k] = aaWorld.z;
-  k++;
+  for(int i=0;i<3;i++)
+    for(int j=0;j<3;j++)
+      tileofArr[i][j] = Array[i][j][k];
+  
+  Array[0][0][k]=aa.x;
+  Array[0][1][k]=aa.y;
+  Array[0][2][k]=aa.z;
+
+  Array[1][0][k]=aaReal.x;
+  Array[1][1][k]=aaReal.y;
+  Array[1][2][k]=aaReal.z;
+
+  Array[2][0][k]=aaWorld.x;
+  Array[2][1][k]=aaWorld.y;
+  Array[2][2][k]=aaWorld.z;
+
+  for(int i=0;i<3;i++)
+    for(int j=0;j<3;j++){
+      sum[i][j] = sum[i][j] + Array[i][j][k] - tileofArr[i][j];
+      v[i][j] = v[i][j] + sum[i][j] / divider;
+    }
+
+    k++;
   if (k >= Count)
     k = 0;
-
-  sumx = sumx + aaWorld.x - lastx;
-  sumy = sumy + aaWorld.y - lasty;
-  sumz = sumz + aaWorld.z - lastz;
-  vx = vx + sumx / divider;
-  vy = vy + sumy / divider;
-  vz = vz + sumz / divider;
   //Serial.print(vx);Serial.print(" ");Serial.println(vy);
+
 }
 
 //===============================================
@@ -201,7 +213,7 @@ bool change = 0;
 
 unsigned long timetime = millis(); // it is to put a time limit to run the arduino code.
 void loop() {
-  unsigned long mytime = millis(); // it is to see sampling period
+  //unsigned long mytime = millis(); // it is to see sampling period
 
   /*the led will be opened and closed according to the state of button
     The reason is to see whether there is a problem or not.*/
@@ -224,7 +236,7 @@ void loop() {
   // if programming failed, don't try to do anything
   if (!dmpReady) return;
   // read a packet from FIFO
-  //if(millis()>timetime+3000 and millis()<timetime+3500){//it is to put a time limit to run the arduino code.
+  if(millis()>timetime and millis()<timetime+4000){//it is to put a time limit to run the arduino code.
   if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) { // Get the Latest packet // 2 to 3 ms is passed here. But the problem is that is not available always.
     //Serial.println(millis()-mytime);//it is to see the sampling period
 
@@ -239,7 +251,7 @@ void loop() {
 
     MAF(); // This is the moving average filter and the integral process.
 
-    const int threshold = 40;
+    #define threshold -1 //40
     /* Threshold is to set minimum movement value.
       If the values are less than threshold, means no movement*/
 
@@ -249,9 +261,10 @@ void loop() {
       message contains the for values. and we are using serial.write to communicate with faster speed.*/
     if (!(IsStop(aaWorld.x, threshold) && IsStop(aaWorld.y, threshold)) || change == 1 )
     {
-      int message[] = {int(vx), int(vy), int(vz), buttonState};
-      //int message2[] = {aaWorld.x,aaWorld.y};
-      Serial.write((char*)&message, sizeof(message));
+      for(int i=0;i<3;i++){
+        int message[] = {int(v[i][0]), int(v[i][1]), int(v[i][2])};
+        Serial.write((char*)&message, sizeof(message));
+      }
       //Serial.print(message[0]);Serial.println(message[1]);
       //Serial.print(vx);Serial.print(" ");Serial.println(vy);
 
@@ -259,15 +272,15 @@ void loop() {
     } else  {
       /* This else is to make all the velocity zero and if there is no movement,
          it won't send any value to the computer*/
-      vx = 0;
+      /*vx = 0;
       vy = 0;
-      vz = 0;
+      vz = 0;*/
     }
 #endif
     //Serial.println(millis()-mytime);//it is to see the sampling period
 
   }
 
-  //}
+  }
 
 }
