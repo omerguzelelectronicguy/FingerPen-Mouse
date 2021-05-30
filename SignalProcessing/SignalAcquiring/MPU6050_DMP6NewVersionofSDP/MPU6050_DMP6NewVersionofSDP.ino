@@ -33,7 +33,8 @@ MPU6050 mpu;
 
 #define INTERRUPT_PIN 2  // use pin 2 on Arduino Uno & most boards
 #define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
-
+unsigned long mytime; // it is to see sampling period
+unsigned long timetime; // it is to put a time limit to run the arduino code.
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
 uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
@@ -152,7 +153,8 @@ void setup() {
   Serial.begin(115200);
 #define buttonPin 3
   pinMode(buttonPin, INPUT);
-
+ mytime = micros(); // it is to see sampling period
+ timetime = millis(); // it is to put a time limit to run the arduino code.
 }
 
 // ================================================================
@@ -211,9 +213,7 @@ int buttonState = 0;
 bool lastButtonState = 0;
 bool change = 0;
 
-unsigned long timetime = millis(); // it is to put a time limit to run the arduino code.
 void loop() {
-  //unsigned long mytime = millis(); // it is to see sampling period
 
   /*the led will be opened and closed according to the state of button
     The reason is to see whether there is a problem or not.*/
@@ -236,11 +236,14 @@ void loop() {
   // if programming failed, don't try to do anything
   if (!dmpReady) return;
   // read a packet from FIFO
-  if(millis()>timetime and millis()<timetime+4000){//it is to put a time limit to run the arduino code.
-  if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) { // Get the Latest packet // 2 to 3 ms is passed here. But the problem is that is not available always.
-    //Serial.println(millis()-mytime);//it is to see the sampling period
+  if(millis()>timetime+2000 and millis()<timetime+10000){//it is to put a time limit to run the arduino code.
+  //Serial.print(micros()-mytime);//it is to see the sampling period
+  //mytime = micros();
+  if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) { // Get the Latest packet 
+  /* 2 to 3 ms is passed function above 
+  but the problem is that is not available by arround 6ms.*/
+    //Serial.print(micros()-mytime);Serial.print("-->");//it is to see the sampling period
 
-#ifdef OUTPUT_READABLE_WORLDACCEL
     // display initial world-frame acceleration, adjusted to remove gravity
     // and rotated based on known orientation from quaternion
     mpu.dmpGetQuaternion(&q, fifoBuffer);
@@ -248,9 +251,11 @@ void loop() {
     mpu.dmpGetGravity(&gravity, &q);
     mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
     mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
-
+    //The functions above takes arround 1ms.
+    //Serial.print(micros()-mytime);Serial.print("-->");
     MAF(); // This is the moving average filter and the integral process.
-
+    //MAF takes almost 500 us time to calculate.
+    //Serial.print(micros()-mytime);Serial.print("-->");//it is to see the time by process. 
     #define threshold -1 //40
     /* Threshold is to set minimum movement value.
       If the values are less than threshold, means no movement*/
@@ -272,13 +277,11 @@ void loop() {
     } else  {
       /* This else is to make all the velocity zero and if there is no movement,
          it won't send any value to the computer*/
-      /*vx = 0;
-      vy = 0;
-      vz = 0;*/
+      for(int i=0;i<3;i++)
+        for(int j=0;i<3;j++)
+          v[i][j] = 0;
     }
-#endif
-    //Serial.println(millis()-mytime);//it is to see the sampling period
-
+    //Serial.print(micros()-mytime);Serial.println(" end");//it is to see the sampling period
   }
 
   }
