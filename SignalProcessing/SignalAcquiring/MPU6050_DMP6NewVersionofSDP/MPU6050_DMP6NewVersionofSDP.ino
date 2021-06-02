@@ -108,10 +108,10 @@ void setup() {
   devStatus = mpu.dmpInitialize();
 
   // supply your own gyro offsets here, scaled for min sensitivity
-  mpu.setXGyroOffset(-205);
+  mpu.setXGyroOffset(-199);
   mpu.setYGyroOffset(-101);
-  mpu.setZGyroOffset(35);
-  mpu.setZAccelOffset(1553); // 1688 factory default for my test chip
+  mpu.setZGyroOffset(46);
+  mpu.setZAccelOffset(1588); // 1688 factory default for my test chip
 
   // make sure it worked (returns 0 if so)
   if (devStatus == 0) {
@@ -124,7 +124,7 @@ void setup() {
     mpu.setDMPEnabled(true);
 
     // enable Arduino interrupt detection
-    //        Serial.print(F("Enabling interrupt detection (Arduino external interrupt "));
+    //        Serial.print(F("Enabling interrupt detection   (Arduino external interrupt "));
     digitalPinToInterrupt(INTERRUPT_PIN);
     //        Serial.println(F(")..."));
     attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING);
@@ -236,7 +236,7 @@ void loop() {
   // if programming failed, don't try to do anything
   if (!dmpReady) return;
   // read a packet from FIFO
-  if(millis()>timetime+2000 and millis()<timetime+10000){//it is to put a time limit to run the arduino code.
+  if(millis()>timetime+3000 and millis()<timetime+6000){//it is to put a time limit to run the arduino code.
   //Serial.print(micros()-mytime);//it is to see the sampling period
   //mytime = micros();
   if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) { // Get the Latest packet 
@@ -267,7 +267,8 @@ void loop() {
     if (!(IsStop(aaWorld.x, threshold) && IsStop(aaWorld.y, threshold)) || change == 1 )
     {
       for(int i=0;i<3;i++){
-        int message[] = {int(v[i][0]), int(v[i][1]), int(v[i][2])};
+        //int message[] = {int(v[i][0]), int(v[i][1]), int(v[i][2])};
+        int message[] = {Array[i][0][k],Array[i][1][k],Array[i][2][k]}; // this sends the acc
         Serial.write((char*)&message, sizeof(message));
       }
       //Serial.print(message[0]);Serial.println(message[1]);
