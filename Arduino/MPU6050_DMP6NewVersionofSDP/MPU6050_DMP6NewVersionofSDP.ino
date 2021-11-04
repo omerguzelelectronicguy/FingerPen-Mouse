@@ -1,7 +1,7 @@
 
 #include "I2Cdev.h"
 
-#include "MPU6050_6Axis_MotionApps20VersionOmer.h"
+#include "MPU6050_6Axis_MotionApps20.h"
 //#include "MPU6050.h" // not necessary if using MotionApps include file
 
 // Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
@@ -161,8 +161,8 @@ void setup() {
 
 //=============================================== Additional Functions
 //This is to return whether mouse is moving or not.
-bool IsStop(int vx, int thresh) {
-  return (vx < thresh && vx > -thresh);
+bool IsStop(int v, int thresh) {
+  return (v < thresh && v > -thresh);
 }
 
 #define Count 4
@@ -172,7 +172,8 @@ int k = 0;
 float vx = 0, vy = 0, vz = 0;
 int sumx = 0, sumy = 0, sumz = 0;
 int lastx = 0, lasty = 0, lastz = 0;
-const int divider = 400*Count;          // it is to scale the values from acceleration to pixel.
+float remx=0, remy = 0 , remz = 0;
+const int divider = 1200*Count;          // it is to scale the values from acceleration to pixel.
 
 void MAF() {
   lastx = aaWorldArray[0][k];
@@ -205,7 +206,7 @@ void loop() {
 
   /*the led will be opened and closed according to the state of button
     The reason is to see whether there is a problem or not.*/
-  buttonState = digitalRead(buttonPin);
+  buttonState = !digitalRead(buttonPin);
   if (buttonState) {
     digitalWrite(LED_PIN, HIGH);
   } else {
@@ -239,7 +240,7 @@ void loop() {
 
     MAF(); // This is the moving average filter and the integral process.
 
-    const int threshold = 40;
+    const int threshold = 20;
     /* Threshold is to set minimum movement value.
       If the values are less than threshold, means no movement*/
 

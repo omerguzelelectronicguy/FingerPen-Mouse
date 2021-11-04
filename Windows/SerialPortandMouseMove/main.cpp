@@ -60,8 +60,8 @@ bool connectPrinter(char *portName)
         }
         else
         {
-            // Set Serial Port specifications.
-            dcbSerialParams.BaudRate = CBR_115200;
+            // Set Serial Port specifications.clear
+            dcbSerialParams.BaudRate = 250000;
             dcbSerialParams.ByteSize = 8;
             dcbSerialParams.StopBits = ONESTOPBIT;
             dcbSerialParams.Parity = NOPARITY;
@@ -110,18 +110,18 @@ int readData(char *buffer, unsigned int nbChar)
                 ReadFile(hSerial, &message, sizeof(message), &bytesRead, 0);
                 // the size of (3*short int) is read, then written on message array
                 // change the bytesRead according to the resting data.
-                printf("%i\t%i\n", message[0],message[1]);
+                printf("%i\t%i\t%i\t%i\n", message[0],message[1],message[2],message[3]);
                 //printf("%i\n",message[3]);
                 moveMouse(-message[0],message[1]);
                 // call the function to move cursor.
                 
                 if(message[3] == 1){
-                    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+                   mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
                     pressed=1;
                 }else{
                     if (pressed){
                         pressed=0;
-                        mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+                     mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
                     }
                 }
             } while (bytesRead > 0);
@@ -137,7 +137,7 @@ int main()
 
     char *buffer = new char[1];
     int nbChar = 1;
-    string str = "COM7"; // Use your port number to connect
+    string str = "COM9"; // Use your port number to connect
     // This COM7 might be changed. At the end it must be automated for arduino
 
     char *writable = new char[str.size() + 1];
