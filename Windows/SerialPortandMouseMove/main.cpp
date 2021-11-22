@@ -11,16 +11,6 @@ HANDLE hSerial;
 bool connected;
 COMSTAT status;
 
-void moveMouse(int movex, int movey) // Created function to move cursor.
-{
-    POINT p;
-    GetCursorPos(&p);
-    // it is to determine the cursor position
-    SetCursorPos(movex + p.x, movey + p.y);
-    // the coming values from arduino added to the current position values.
-    // Sleep(1); //çalışmazsa bir dene
-}
-
 bool connectPrinter(char *portName)
 {
 
@@ -101,46 +91,34 @@ int readData(char *buffer, unsigned int nbChar)
 
         if (dwCommModemStatus & EV_RXCHAR)
         {
-            float prex = 0, prey = 0;
+            while (1)
+            {
+                byte start_message;
+                ReadFile(hSerial, &start_message, sizeof(start_message), &bytesRead, 0);
+                if (start_message == 85)
+                {
+                    printf("started");
+                    break;
+                }
+                printf("start comment waiting\n");
+            }
+
             do
             {
                 // short int message[4];
-                float message[4];
+                short int message[4];
                 // container for coming message from arduino
                 // 3 messages include x y z velocity vector.
 
                 ReadFile(hSerial, &message, sizeof(message), &bytesRead, 0);
+
                 // the size of (3*short int) is read, then written on message array
                 // change the bytesRead according to the resting data.
-                // printf("%f\t%f\t%f\t%f\n", message[0],message[1],message[2],message[3]);
+                // printf("%i\t%i\t%i\t%i\n", message[0],message[1],message[2],message[3]);
                 // printf("%i\n",message[3]);
                 // moveMouse(float(-message[2]*100),float(-message[0]*100));
-                // call the function to move cursor.
-                // This function will move cursor directly to stated position.
-                // SetCursorPos(float(1300-message[2]*2000),float(450-message[0]*1500));
-                int dx = int(2000 * (prex - message[2]));
-                int dy = int(1500 * (prey - message[0]));
-                mouse_event(1, dx, dy, 0, 0);
-                // printf("%i\t%i\t", dx,dy);
-                prex = message[2];
-                prey = message[0];
+                mouse_event(message[0], message[1], message[2], 0, 0);
 
-                if (int(message[3]) == 1)
-                {
-                    if (!pressed)
-                    {
-                        mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
-                         pressed = 1;
-                    }
-                }
-                else
-                {
-                    if (pressed)
-                    {
-                        pressed = 0;
-                        mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
-                    }
-                }
             } while (bytesRead > 0);
         }
     }
