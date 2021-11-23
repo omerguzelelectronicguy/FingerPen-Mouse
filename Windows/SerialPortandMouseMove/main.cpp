@@ -114,7 +114,7 @@ int readData(char *buffer, unsigned int nbChar)
 
                 // the size of (3*short int) is read, then written on message array
                 // change the bytesRead according to the resting data.
-                // printf("%i\t%i\t%i\t%i\n", message[0],message[1],message[2],message[3]);
+                 printf("%i\t%i\t%i\t%i\n", message[0],message[1],message[2],message[3]);
                 // printf("%i\n",message[3]);
                 // moveMouse(float(-message[2]*100),float(-message[0]*100));
                 mouse_event(message[0], message[1], message[2], 0, 0);
