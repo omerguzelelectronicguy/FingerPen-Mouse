@@ -91,13 +91,14 @@ int readData(char *buffer, unsigned int nbChar)
 
         if (dwCommModemStatus & EV_RXCHAR)
         {
-            while (1)
+           while (1)
             {
                 byte start_message;
                 ReadFile(hSerial, &start_message, sizeof(start_message), &bytesRead, 0);
                 if (start_message == 85)
                 {
                     printf("started");
+                    start_message = 0;
                     break;
                 }
                 printf("start comment waiting\n");
@@ -111,10 +112,10 @@ int readData(char *buffer, unsigned int nbChar)
                 // 3 messages include x y z velocity vector.
 
                 ReadFile(hSerial, &message, sizeof(message), &bytesRead, 0);
-
+                // while(message[0] != 1 && message[0] != 2 && message[0] != 4 && message[0] != 8 &&message[0] != 16 );
                 // the size of (3*short int) is read, then written on message array
                 // change the bytesRead according to the resting data.
-                 printf("%i\t%i\t%i\t%i\n", message[0],message[1],message[2],message[3]);
+                 //printf("%i\t%i\t%i\t%i\n", message[0],message[1],message[2],message[3]);
                 // printf("%i\n",message[3]);
                 // moveMouse(float(-message[2]*100),float(-message[0]*100));
                 mouse_event(message[0], message[1], message[2], 0, 0);
