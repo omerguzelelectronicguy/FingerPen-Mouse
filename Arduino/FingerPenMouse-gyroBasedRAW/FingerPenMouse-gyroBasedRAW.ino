@@ -30,7 +30,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ===============================================
 */
-
+unsigned long t;
 // I2Cdev and MPU6050 must be installed as libraries, or else the .cpp/.h files
 // for both classes must be in the include path of your project
 #include "I2Cdev.h"
@@ -52,6 +52,23 @@ MPU6050 accelgyro;
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
 
+#define MOUSEEVENTF_MOVE 0x0001
+#define MOUSEEVENTF_LEFTDOWN 0x0002
+#define MOUSEEVENTF_LEFTUP 0x0004
+#define MOUSEEVENTF_RIGHTDOWN 0x0008
+#define MOUSEEVENTF_RIGHTUP 0x0010
+#define MOUSEEVENTF_MIDDLEDOWN 0x0020
+#define MOUSEEVENTF_MIDDLEUP 0x0040
+#define button1 3
+#define button2 A7
+#define baudRate 250000
+
+bool btn1 = 0;
+byte buttonState1 = MOUSEEVENTF_LEFTUP;
+byte oldButtonState1 = buttonState1;
+bool btn2 = 0;
+byte buttonState2 = MOUSEEVENTF_RIGHTUP;
+byte oldButtonState2 = buttonState2;
 
 
 // uncomment "OUTPUT_READABLE_ACCELGYRO" if you want to see a tab-separated
@@ -80,7 +97,7 @@ void setup() {
     // initialize serial communication
     // (38400 chosen because it works as well at 8MHz as it does at 16MHz, but
     // it's really up to you depending on your project)
-    Serial.begin(250000);
+    Serial.begin(baudRate);
 
     // initialize device
     //Serial.println("Initializing I2C devices...");
@@ -91,38 +108,75 @@ void setup() {
     //Serial.println(accelgyro.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
 
     // use the code below to change accel/gyro offset values
-    /*
-    Serial.println("Updating internal sensor offsets...");
-    // -76	-2359	1688	0	0	0
-    Serial.print(accelgyro.getXAccelOffset()); Serial.print("\t"); // -76
+    
+    //Serial.println("Updating internal sensor offsets...");
+    //-2466  -211  1553  -205  -101  35  
+    //-2466 -211  1553  220 76  -85 
+    /*Serial.print(accelgyro.getXAccelOffset()); Serial.print("\t"); // -76
     Serial.print(accelgyro.getYAccelOffset()); Serial.print("\t"); // -2359
     Serial.print(accelgyro.getZAccelOffset()); Serial.print("\t"); // 1688
     Serial.print(accelgyro.getXGyroOffset()); Serial.print("\t"); // 0
     Serial.print(accelgyro.getYGyroOffset()); Serial.print("\t"); // 0
     Serial.print(accelgyro.getZGyroOffset()); Serial.print("\t"); // 0
     Serial.print("\n");
-    accelgyro.setXGyroOffset(220);
-    accelgyro.setYGyroOffset(76);
-    accelgyro.setZGyroOffset(-85);
+    accelgyro.setXGyroOffset(-205);
+    accelgyro.setYGyroOffset(-101);
+    accelgyro.setZGyroOffset(35);
+    accelgyro.setXAccelOffset(-2466);
+    accelgyro.setYAccelOffset(-211);
+    accelgyro.setZAccelOffset(1553);
     Serial.print(accelgyro.getXAccelOffset()); Serial.print("\t"); // -76
     Serial.print(accelgyro.getYAccelOffset()); Serial.print("\t"); // -2359
     Serial.print(accelgyro.getZAccelOffset()); Serial.print("\t"); // 1688
     Serial.print(accelgyro.getXGyroOffset()); Serial.print("\t"); // 0
     Serial.print(accelgyro.getYGyroOffset()); Serial.print("\t"); // 0
     Serial.print(accelgyro.getZGyroOffset()); Serial.print("\t"); // 0
-    Serial.print("\n");
-    */
-  accelgyro.setXGyroOffset(-205);
-  accelgyro.setYGyroOffset(-101);
-  accelgyro.setZGyroOffset(35);
-  accelgyro.setZAccelOffset(1553); // 1688 factory default for my test chip
-
+    Serial.print("\n");*/
+    //-2466  -211  1553  -205  -101  35  
+    //-2466 -211  1553  220 76  -85 
+    
+    accelgyro.setXGyroOffset(-205);
+    accelgyro.setYGyroOffset(-101);
+    accelgyro.setZGyroOffset(35);
+    accelgyro.setXAccelOffset(-2466);
+    accelgyro.setYAccelOffset(-211);
+    accelgyro.setZAccelOffset(1553);
+    
     // configure Arduino LED pin for output
     pinMode(LED_PIN, OUTPUT);
-  byte message = {85};//to start the communication.
-  Serial.write((char *)&message, sizeof(message));}
+    pinMode(button1, INPUT);
+    pinMode(button2, INPUT_PULLUP);
 
+  byte message = {85};//to start the communication.
+  Serial.write((char *)&message, sizeof(message));
+  t= micros();
+}
+byte a =0;
 void loop() {
+    buttonState1 = digitalRead(button1) ? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_LEFTUP ;
+    buttonState2 = digitalRead(button2)? MOUSEEVENTF_RIGHTDOWN : MOUSEEVENTF_RIGHTUP ;;
+    
+    if(buttonState1!=oldButtonState1){
+      oldButtonState1 = buttonState1;
+      int message[] = {(int)buttonState1, 0, 0, 0};
+      Serial.write((char *)&message, sizeof(message));
+    }
+    /*if(buttonState2!=oldButtonState2){
+      oldButtonState2 = buttonState2;
+      int message[] = {(int)buttonState2, 0, 0, 0};
+      Serial.write((char *)&message, sizeof(message));
+    }*/
+      
+    
+   
+
+  /*a++;
+  if (a==255){
+    t= micros()-t;
+    Serial.println();
+    Serial.println(t);
+    t= micros();
+  }*/
     // read raw accel/gyro measurements from device
     accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
 
@@ -132,9 +186,10 @@ void loop() {
 
     #ifdef OUTPUT_READABLE_ACCELGYRO
         // display tab-separated accel/gyro x/y/z values
-      int message[] = {(int) 1, -(int)gz/128, -(int)gx/128, (int)gy/128};
+      //int message[] = {(int) 1, -(int)gz/128, -(int)gx/128, (int)gy/128};
+      int message[] = {(int) 1, -(int)gz/512, -(int)gx/512, (int)gy/512};
       Serial.write((char *)&message, sizeof(message));
-      delay(5);
+      delayMicroseconds(10000);
      
        /* Serial.print("a/g:\t");
         Serial.print(ax); Serial.print("\t");
