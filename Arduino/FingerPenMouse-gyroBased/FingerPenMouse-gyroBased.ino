@@ -1,4 +1,5 @@
 
+
 #include "I2Cdev.h"
 
 #include "MPU6050_6Axis_MotionApps20.h"
@@ -286,7 +287,9 @@ void loop()
       zpos = angle_c;
       int message[] = {(int) MOUSEEVENTF_MOVE, dx, dz, dy};
       Serial.write((char *)&message, sizeof(message));
-      delay(10);
+      delay(1);
+      Serial.println();
+      Serial.println(millis());
     }
     /*Serial.print("q: x: ");
       Serial.print(q.x, 5);
