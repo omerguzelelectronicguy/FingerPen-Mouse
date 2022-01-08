@@ -33,6 +33,15 @@ MPU6050 mpu;
 #define INTERRUPT_PIN 2 // use pin 2 on Arduino Uno & most boards
 #define LED_PIN 13      // (Arduino is 13, Teensy is 11, Teensy++ is 6)
 
+
+#define MOUSEEVENTF_MOVE 0x0001
+#define MOUSEEVENTF_LEFTDOWN 0x0002
+#define MOUSEEVENTF_LEFTUP 0x0004
+#define MOUSEEVENTF_RIGHTDOWN 0x0008
+#define MOUSEEVENTF_RIGHTUP 0x0010
+#define MOUSEEVENTF_MIDDLEDOWN 0x0020
+#define MOUSEEVENTF_MIDDLEUP 0x0040
+
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
 uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
@@ -150,13 +159,18 @@ void setup()
 
     // configure LED for output
     pinMode(LED_PIN, OUTPUT);
-    Serial.begin(250000);
+    Serial.begin(115200);
 #define buttonPin 3
     pinMode(buttonPin, INPUT);
 
     digitalWrite(LED_BUILTIN, HIGH);
     delay(1000);
     timetime = millis(); // it is to put a time limit to run the arduino code.
+    byte message = {85};//to start the communication.
+    Serial.write((char *)&message, sizeof(message));
+    Serial.write((char *)&message, sizeof(message));
+    Serial.write((char *)&message, sizeof(message));
+    Serial.write((char *)&message, sizeof(message));    
 }
 // ================================================================
 // ===                    MAIN PROGRAM LOOP                     ===
@@ -247,6 +261,13 @@ void loop()
     {
         change = 1;
         lastButtonState = buttonState;
+        if(buttonState){
+            int message[] = {MOUSEEVENTF_LEFTDOWN, 0, 0, 0};
+            Serial.write((char *)&message, sizeof(message));
+        }else{
+            int message[] = {MOUSEEVENTF_LEFTUP, 0, 0, 0};
+            Serial.write((char *)&message, sizeof(message));
+        }
     }
     else
     {
@@ -283,11 +304,11 @@ void loop()
           message contains the for values. and we are using serial.write to communicate with faster speed.*/
          if (!(IsStop(aaWorld.x, threshold) && IsStop(aaWorld.y, threshold)) || change == 1 )
         {
-            int message[] = {int(sumx), int(sumy), int(sumz), buttonState};
+            
+            int message[] = {1,int(sumx), int(sumy),0};
             // int message2[] = {aaWorld.x,aaWorld.y};
             Serial.write((char *)&message, sizeof(message));
             //Serial.print(int(sumx));Serial.print("\t");Serial.println(int(sumy));
-
         }  else  {
         /* This else is to make all the velocity zero and if there is no movement,
            it won't send any value to the computer*/
