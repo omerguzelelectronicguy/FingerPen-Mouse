@@ -61,7 +61,7 @@ int16_t gx, gy, gz;
 #define MOUSEEVENTF_MIDDLEUP 0x0040
 #define button1 3
 #define button2 A7
-#define baudRate 250000
+#define baudRate 115200
 
 bool btn1 = 0;
 byte buttonState1 = MOUSEEVENTF_LEFTUP;
@@ -149,6 +149,9 @@ void setup() {
 
   byte message = {85};//to start the communication.
   Serial.write((char *)&message, sizeof(message));
+  Serial.write((char *)&message, sizeof(message));
+  Serial.write((char *)&message, sizeof(message));
+  Serial.write((char *)&message, sizeof(message));
   t= micros();
 }
 byte a =0;
@@ -188,7 +191,13 @@ void loop() {
         // display tab-separated accel/gyro x/y/z values
       //int message[] = {(int) 1, -(int)gz/128, -(int)gx/128, (int)gy/128};
       int message[] = {(int) 1, -(int)gz/512, -(int)gx/512, (int)gy/512};
-      Serial.write((char *)&message, sizeof(message));
+      if(message[1] != 0 || message[2] != 0 || message[3] != 0){
+        Serial.write((char *)&message, sizeof(message));
+        /*Serial.print(message[0]); Serial.print("\t");
+        Serial.print(message[1]); Serial.print("\t");
+        Serial.print(message[2]); Serial.print("\t");
+        Serial.print(message[3]); Serial.print("\n");*/
+      }
       delayMicroseconds(10000);
      
        /* Serial.print("a/g:\t");
