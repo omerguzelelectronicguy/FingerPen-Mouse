@@ -10,10 +10,10 @@
 #include "Wire.h"
 #endif
 
-//#define OUTPUT_READABLE_WORLDACCEL
+#define OUTPUT_READABLE_WORLDACCEL
 //#define OUTPUT_READABLE_YAWPITCHROLL
 //#define OUTPUT_READABLE_EULER
-#define OUTPUT_READABLE_REALACCEL
+//#define OUTPUT_READABLE_REALACCEL
 //#define OUTPUT_READABLE_QUATERNION
 
 #define MOUSEEVENTF_MOVE 0x0001
@@ -23,6 +23,14 @@
 #define MOUSEEVENTF_RIGHTUP 0x0010
 #define MOUSEEVENTF_MIDDLEDOWN 0x0020
 #define MOUSEEVENTF_MIDDLEUP 0x0040
+
+#define buttonPin 3
+#define baudRate 1000000
+
+#define INTERRUPT_PIN 2 // use pin 2 on Arduino Uno & most boards
+#define LED_PIN 13      // (Arduino is 13, Teensy is 11, Teensy++ is 6)
+
+unsigned long timetime;
 
 // class default I2C address is 0x68
 // specific I2C addresses may be passed as a parameter here
@@ -44,8 +52,6 @@ MPU6050 mpu;
 // is present in this case). Could be quite handy in some cases.
 
 
-#define INTERRUPT_PIN 2 // use pin 2 on Arduino Uno & most boards
-#define LED_PIN 13      // (Arduino is 13, Teensy is 11, Teensy++ is 6)
 
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
@@ -77,7 +83,6 @@ void dmpDataReady()
 // ================================================================
 // ===                      INITIAL SETUP                       ===
 // ================================================================
-unsigned long timetime;
 
 void setup()
 {
@@ -164,15 +169,17 @@ void setup()
 
     // configure LED for output
     pinMode(LED_PIN, OUTPUT);
-    Serial.begin(250000);
-#define buttonPin 3
+    Serial.begin(baudRate);
     pinMode(buttonPin, INPUT);
 
     digitalWrite(LED_BUILTIN, HIGH);
     delay(1000);
-    timetime = millis(); // it is to put a time limit to run the arduino code.
+    timetime = micros(); // it is to put a time limit to run the arduino code.
 
     byte message = {85};//to start the communication.
+    Serial.write((char *)&message, sizeof(message));
+    Serial.write((char *)&message, sizeof(message));
+    Serial.write((char *)&message, sizeof(message));
     Serial.write((char *)&message, sizeof(message));
 }
 // ================================================================
@@ -193,8 +200,18 @@ float vz = 0;
 bool btn = 0;
 int buttonState = MOUSEEVENTF_LEFTDOWN;
 int lastButtonState = buttonState;
+float stop_flag = 0;
+float previous_a = 0, previous_b = 0, previous_c = 0;
 
+float difference(float val, float limit){
+    float res = val-limit;
+    if(res>0){
+        return res;
+    }else{
+        return -res;
+    }
 
+}
 void loop()
 {
     btn = digitalRead(buttonPin);
@@ -228,12 +245,14 @@ void loop()
     if (buttonState != lastButtonState) {
         lastButtonState = buttonState;
         int message[] = {(int)buttonState, 0, 0, 0};
-        Serial.write((char *)&message, sizeof(message));
+        //Serial.write((char *)&message, sizeof(message));
     }
-
     // if programming failed, don't try to do anything
     if (!dmpReady)
         return;
+
+    
+    
     // read a packet from FIFO
     // if(millis()>timetime+3000 and millis()<timetime+3500){//it is to put a time limit to run the arduino code.
     if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer))
@@ -246,7 +265,7 @@ void loop()
     mpu.dmpGetAccel(&aa, fifoBuffer);
     mpu.dmpGetGravity(&gravity, &q);
     mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
-    float accel_a =(float) aaReal.x, accel_b = (float)aaReal.y, accel_c = -(float)aaReal.z;
+    float accel_a =(float) ((aaReal.x-15)/32), accel_b = (float) ((aaReal.y+3)/26), accel_c = -(float) ((aaReal.z - 11)/41);
     #define accel_correction 1
 #endif
 
@@ -258,26 +277,50 @@ void loop()
     mpu.dmpGetGravity(&gravity, &q);
     mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
     mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
-    float accel_a = (float)aaWorld.x, accel_b = (float)aaWorld.y, accel_c = -(float)aaWorld.z;
+    //float accel_a = (float)aaWorld.x, accel_b = (float)aaWorld.y, accel_c = -(float)aaWorld.z;
     #define accel_correction 1/131070
 #endif
 
 #define sensitivity 10 // angle correction is to equalize each angle
-#define pixel_normalizer 10000 
+#define pixel_normalizer 500 
 #define correction_term sensitivity/ pixel_normalizer
-        vx = 0.98* vx + accel_a * accel_correction;// * dt;
-        vy = 0.98* vy + accel_b * accel_correction;// * dt;
-        vz = 0.98* vz + accel_c * accel_correction;// * dt;
-        
-        int dx = (int)(vx *correction_term);
-        int dy = (int)(vy *correction_term);
-        int dz = (int)(vz *correction_term);
+        ////////some offset and range operations
+        /*vx = 0.99* vx + accel_a * accel_correction;// * dt;
+        vy = 0.99* vy + accel_b * accel_correction;// * dt;
+        vz = 0.99* vz + accel_c * accel_correction;// * dt;
+        */
+        int dx,dy,dz;
+        /*
+        dx = (int)(vx *correction_term);
+        dy = (int)(vy *correction_term);
+        dz = (int)(vz *correction_term);
+*/
+        //if (dx != 0 || dy != 0 || dz != 0) {
+            dx = aaReal.x; dy = aaReal.y; dz = aaReal.z;          // both are good
+            //dx = aa.x; dy = aa.y; dz = aa.z; 
+            //dx = aaWorld.x; dy = aaWorld.y; dz = aaWorld.z;         // both are good
+            unsigned long temp = micros() - timetime;
+            int t = (int) temp;
+            timetime = micros();
 
-        if (dx != 0 || dy != 0 || dz != 0) {
-            int message[] = {(int) MOUSEEVENTF_MOVE, dx, dz, dy};
+            int message[] = {(int) MOUSEEVENTF_MOVE, dx,dy ,t };
             Serial.write((char *)&message, sizeof(message));
-            delay(10);
-        }
+            delay(1);
+        //}
+        #define treshv 
+        /*Serial.print("\naxreal: ");
+        Serial.print(accel_a);
+        Serial.print("\tayreal: ");
+        Serial.print(accel_b);
+        Serial.print("\tazreal: ");
+        Serial.print(accel_c);*/
+        /*Serial.print("\tax: ");
+        Serial.print(aa.x);
+        Serial.print("\tay: ");
+        Serial.print(aa.y);
+        Serial.print("\taz: ");
+        Serial.println(aa.z);*/
+       
         /*  Serial.print("q: x: ");
             Serial.print(q.x, 5);
             Serial.print("\ty: ");
@@ -299,9 +342,34 @@ void loop()
             Serial.print("\tr: ");
             Serial.print(ypr[2], 5);
             Serial.print("\n");*/
-
-
         // Serial.println(millis()-mytime);//it is to see the sampling period
     }
 
 }
+/*octave:8> mean(ax)
+ans = 14.962
+octave:9> mean(ay)
+ans = -3.4878
+octave:10> mean(az)
+ans = -11.333*/
+/*octave:15> max(ax)-min(ax)
+ans = 32
+octave:16> max(ay)-min(ay)
+ans = 26
+octave:17> max(az)-min(az)
+ans = 41*/
+
+
+/////////////////////////////////// based on MPU6050.
+/*octave:21> max(aax)-min(aax)
+ans = 37
+octave:22> max(aay)-min(aay)
+ans = 27
+octave:23> max(aaz)-min(aaz)
+ans = 42
+octave:24> mean(aax)
+ans = -23.994
+octave:25> mean(aay)
+ans = 8.4100
+octave:26> mean(aaz)
+ans = 8179.5*/
