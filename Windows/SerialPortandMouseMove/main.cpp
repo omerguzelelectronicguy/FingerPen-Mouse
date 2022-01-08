@@ -51,7 +51,7 @@ bool connectPrinter(char *portName)
         else
         {
             // Set Serial Port specifications.clear
-            dcbSerialParams.BaudRate = 250000;
+            dcbSerialParams.BaudRate = 115200;
             dcbSerialParams.ByteSize = 8;
             dcbSerialParams.StopBits = ONESTOPBIT;
             dcbSerialParams.Parity = NOPARITY;
@@ -91,15 +91,18 @@ int readData(char *buffer, unsigned int nbChar)
 
         if (dwCommModemStatus & EV_RXCHAR)
         {
-           while (1)
+            int n = 0;
+           while (n)
             {
                 byte start_message;
                 ReadFile(hSerial, &start_message, sizeof(start_message), &bytesRead, 0);
                 if (start_message == 85)
                 {
-                    printf("started");
                     start_message = 0;
-                    break;
+                    n--;
+                    printf("n= %i\n",n);
+                }else{
+                    n = 4;
                 }
                 printf("start comment waiting\n");
             }
@@ -107,7 +110,7 @@ int readData(char *buffer, unsigned int nbChar)
             do
             {
                 // short int message[4];
-                short int message[4];
+                int8_t message[3];
                 // container for coming message from arduino
                 // 3 messages include x y z velocity vector.
 
@@ -115,10 +118,9 @@ int readData(char *buffer, unsigned int nbChar)
                 // while(message[0] != 1 && message[0] != 2 && message[0] != 4 && message[0] != 8 &&message[0] != 16 );
                 // the size of (3*short int) is read, then written on message array
                 // change the bytesRead according to the resting data.
-                 //printf("%i\t%i\t%i\t%i\n", message[0],message[1],message[2],message[3]);
+                printf("%i\t%i\t%i\n", message[0],message[1],message[2]);
                 // printf("%i\n",message[3]);
-                // moveMouse(float(-message[2]*100),float(-message[0]*100));
-                mouse_event(message[0], message[1], message[2], 0, 0);
+                //mouse_event(message[0],- message[1], message[2], 0, 0);
 
             } while (bytesRead > 0);
         }
@@ -132,7 +134,7 @@ int main()
 
     char *buffer = new char[1];
     int nbChar = 1;
-    string str = "COM7"; // Use your port number to connect
+    string str = "COM9"; // Use your port number to connect
     // This COM7 might be changed. At the end it must be automated for arduino
 
     char *writable = new char[str.size() + 1];
