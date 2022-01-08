@@ -165,7 +165,7 @@ void setup()
 
   // configure LED for output
   pinMode(LED_PIN, OUTPUT);
-  Serial.begin(250000);
+  Serial.begin(115200);
 #define buttonPin 3
   pinMode(buttonPin, INPUT);
 
@@ -174,6 +174,9 @@ void setup()
   timetime = millis(); // it is to put a time limit to run the arduino code.
 
   byte message = {85};//to start the communication.
+  Serial.write((char *)&message, sizeof(message));
+  Serial.write((char *)&message, sizeof(message));
+  Serial.write((char *)&message, sizeof(message));
   Serial.write((char *)&message, sizeof(message));
 }
 // ================================================================
