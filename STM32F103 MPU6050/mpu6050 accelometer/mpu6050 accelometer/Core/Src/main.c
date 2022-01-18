@@ -91,9 +91,13 @@ mouseHID mousehid = {0,0,0,0};
 #define WHO_AM_I_REG 0x75
 
 int buttonstate = 0;
-int rightclick = 0;
+int right_click = 0;
 int thirdbutton = 0;
 int oldbuttonstate = 0;
+int oldright_click = 0;
+int oldthird_button = 0;
+int divider[] ={64, 128,192, 256,384, 512,768,1024};
+int divider_level = 3;
 
 int16_t Accel_X_RAW = 0;
 int16_t Accel_Y_RAW = 0;
@@ -178,10 +182,9 @@ void MPU6050_Read_Gyro (void)
 	     we have to divide according to the Full scale value set in FS_SEL
 	     I have configured FS_SEL = 0. So I am dividing by 131.0
 	     for more details check GYRO_CONFIG Register              ****/
-
-	Gx = (Gyro_X_RAW+100)/256.0;
-	Gy = Gyro_Y_RAW/256.0;
-	Gz = Gyro_Z_RAW/256.0;
+	Gx = (Gyro_X_RAW + 100)/divider[divider_level];
+	Gy = Gyro_Y_RAW	/		divider[divider_level];
+	Gz = (Gyro_Z_RAW + 100)/divider[divider_level];
 }
 
 
@@ -225,10 +228,12 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  HAL_Delay (1000);//to solve the reset issue
   MX_I2C1_Init();
+  HAL_Delay (100);//to solve the reset issue
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_Delay (100);//to solve the reset issue
   MPU6050_Init();
 
   /* USER CODE END 2 */
@@ -243,21 +248,33 @@ int main(void)
 	MPU6050_Read_Accel();
 	MPU6050_Read_Gyro();
 
-	mousehid.mouse_y = -Gy;
-
-	mousehid.mouse_x = -Gx;
+	mousehid.mouse_y = -Gz;
+	mousehid.mouse_x = Gy;
 
 	buttonstate = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_5);
-	/*rightclick = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_6);
-	thirdbutton = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_7);*/
+	right_click = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_6);
+	thirdbutton = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_7);
 
 	if (buttonstate != oldbuttonstate )
 	{
 	  mousehid.button = buttonstate;  // left click =1, right click =2
 	  USBD_HID_SendReport(&hUsbDeviceFS, &mousehid, sizeof (mousehid));
 	  oldbuttonstate = buttonstate;
-	}
-	else{
+	}else if(right_click != oldright_click){
+		if(right_click ==1){
+			mousehid.button = 2;
+		}else{
+			mousehid.button = 0;
+		}
+		USBD_HID_SendReport(&hUsbDeviceFS, &mousehid, sizeof (mousehid));
+		oldright_click =right_click;
+	}else if(thirdbutton){
+		divider_level = divider_level + 1;
+		if(divider_level == 8){
+			divider_level=0;
+		}
+		HAL_Delay (50);  // wait for a while
+	}else{
 		USBD_HID_SendReport(&hUsbDeviceFS, &mousehid, sizeof (mousehid));
 	}
 
