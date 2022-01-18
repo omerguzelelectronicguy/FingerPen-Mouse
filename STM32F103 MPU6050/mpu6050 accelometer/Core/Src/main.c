@@ -90,6 +90,8 @@ mouseHID mousehid = {0,0,0,0};
 #define PWR_MGMT_1_REG 0x6B
 #define WHO_AM_I_REG 0x75
 
+int buttonstate = 0;
+int oldbuttonstate = 0;
 
 int16_t Accel_X_RAW = 0;
 int16_t Accel_Y_RAW = 0;
@@ -152,9 +154,9 @@ void MPU6050_Read_Accel (void)
 	     I have configured FS_SEL = 0. So I am dividing by 16384.0
 	     for more details check ACCEL_CONFIG Register              ****/
 
-	Ax = Accel_X_RAW/16384.0;
-	Ay = Accel_Y_RAW/16384.0;
-	Az = Accel_Z_RAW/16384.0;
+	Ax = Accel_X_RAW*9.8/16384.0;
+	Ay = Accel_Y_RAW*9.8/16384.0;
+	Az = Accel_Z_RAW*9.8/16384.0;
 }
 
 
@@ -175,9 +177,9 @@ void MPU6050_Read_Gyro (void)
 	     I have configured FS_SEL = 0. So I am dividing by 131.0
 	     for more details check GYRO_CONFIG Register              ****/
 
-	Gx = Gyro_X_RAW/131.0;
-	Gy = Gyro_Y_RAW/131.0;
-	Gz = Gyro_Z_RAW/131.0;
+	Gx = Gyro_X_RAW/310.0;
+	Gy = Gyro_Y_RAW/310.0;
+	Gz = Gyro_Z_RAW/310.0;
 }
 
 
@@ -227,9 +229,6 @@ int main(void)
 
   MPU6050_Init();
 
-
-
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -242,23 +241,21 @@ int main(void)
 	MPU6050_Read_Accel();
 	MPU6050_Read_Gyro();
 
-	mousehid.mouse_y = Ay*10;
+	mousehid.mouse_y = -Gy;
 
-	mousehid.mouse_x = Ax*10;
+	mousehid.mouse_x = -Gz;
 
-	//USBD_HID_SendReport(&hUsbDeviceFS, &mousehid, sizeof (mousehid));
-	if (button_flag == 1)
+	buttonstate = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_5);
+
+	if (buttonstate != oldbuttonstate )
 	{
-	  mousehid.button = 1;  // left click =1, right click =2
+	  mousehid.button = buttonstate;  // left click =1, right click =2
 	  USBD_HID_SendReport(&hUsbDeviceFS, &mousehid, sizeof (mousehid));
-	  HAL_Delay(15);
-	  mousehid.button = 0;  // left click =1, right click =2
-	  USBD_HID_SendReport(&hUsbDeviceFS, &mousehid, sizeof (mousehid));
-	  button_flag = 0;
+	  oldbuttonstate = buttonstate;
 	}
-
-	USBD_HID_SendReport
-	(&hUsbDeviceFS, &mousehid, sizeof (mousehid));
+	else{
+		USBD_HID_SendReport(&hUsbDeviceFS, &mousehid, sizeof (mousehid));
+	}
 
 
 	HAL_Delay (15);  // wait for a while
