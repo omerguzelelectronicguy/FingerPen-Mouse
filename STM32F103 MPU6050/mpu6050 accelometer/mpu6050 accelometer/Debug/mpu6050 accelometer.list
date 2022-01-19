@@ -1544,14 +1544,14 @@ int main(void)
  8000fec:	709a      	strb	r2, [r3, #2]
 			while(thirdbutton){
  8000fee:	e048      	b.n	8001082 <main+0x1be>
-				if(Accel_Z_RAW < 256 || Accel_Z_RAW > -256 ){
+				if(Accel_Z_RAW < 128 || Accel_Z_RAW > -128 ){
  8000ff0:	4b3d      	ldr	r3, [pc, #244]	; (80010e8 <main+0x224>)
  8000ff2:	f9b3 3000 	ldrsh.w	r3, [r3]
- 8000ff6:	2bff      	cmp	r3, #255	; 0xff
+ 8000ff6:	2b7f      	cmp	r3, #127	; 0x7f
  8000ff8:	dd05      	ble.n	8001006 <main+0x142>
  8000ffa:	4b3b      	ldr	r3, [pc, #236]	; (80010e8 <main+0x224>)
  8000ffc:	f9b3 3000 	ldrsh.w	r3, [r3]
- 8001000:	f113 0fff 	cmn.w	r3, #255	; 0xff
+ 8001000:	f113 0f7f 	cmn.w	r3, #127	; 0x7f
  8001004:	db02      	blt.n	800100c <main+0x148>
 					accumulate = 0;
  8001006:	4b39      	ldr	r3, [pc, #228]	; (80010ec <main+0x228>)
@@ -1572,10 +1572,10 @@ int main(void)
  8001022:	4413      	add	r3, r2
  8001024:	4a31      	ldr	r2, [pc, #196]	; (80010ec <main+0x228>)
  8001026:	6013      	str	r3, [r2, #0]
-				if (accumulate > 16){
+				if (accumulate > 20){
  8001028:	4b30      	ldr	r3, [pc, #192]	; (80010ec <main+0x228>)
  800102a:	681b      	ldr	r3, [r3, #0]
- 800102c:	2b10      	cmp	r3, #16
+ 800102c:	2b14      	cmp	r3, #20
  800102e:	dd0b      	ble.n	8001048 <main+0x184>
 					mousehid.wheel = 1;
  8001030:	4b24      	ldr	r3, [pc, #144]	; (80010c4 <main+0x200>)

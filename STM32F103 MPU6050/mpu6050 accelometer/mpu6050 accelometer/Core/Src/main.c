@@ -278,11 +278,11 @@ int main(void)
 			mousehid.mouse_x = 0;
 			mousehid.mouse_y = 0;
 			while(thirdbutton){
-				if(Accel_Z_RAW < 256 || Accel_Z_RAW > -256 ){
+				if(Accel_Z_RAW < 128 || Accel_Z_RAW > -128 ){
 					accumulate = 0;
 				}
 				accumulate = accumulate + Accel_Z_RAW / 256;
-				if (accumulate > 16){
+				if (accumulate > 20){
 					mousehid.wheel = 1;
 					accumulate = 0;
 					USBD_HID_SendReport(&hUsbDeviceFS, &mousehid, sizeof (mousehid));
