@@ -96,8 +96,9 @@ int thirdbutton = 0;
 int oldbuttonstate = 0;
 int oldright_click = 0;
 int oldthird_button = 0;
-int divider[] ={64, 128,192, 256,384, 512,768,1024};
-int divider_level = 3;
+int divider[] ={ 128, 192, 256, 384, 512, 768, 1024};
+int divider_level = 4;
+int accumulate = 0;
 
 int16_t Accel_X_RAW = 0;
 int16_t Accel_Y_RAW = 0;
@@ -269,11 +270,38 @@ int main(void)
 		USBD_HID_SendReport(&hUsbDeviceFS, &mousehid, sizeof (mousehid));
 		oldright_click =right_click;
 	}else if(thirdbutton){
-		divider_level = divider_level + 1;
-		if(divider_level == 8){
-			divider_level=0;
+
+		HAL_Delay (300);  // wait for a while
+		thirdbutton = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_7);
+		if(thirdbutton){// if it is still pressed it means scroll if not it means just change sensitivity.
+			mousehid.button = 0;
+			mousehid.mouse_x = 0;
+			mousehid.mouse_y = 0;
+			while(thirdbutton){
+				if(Accel_Z_RAW < 256 || Accel_Z_RAW > -256 ){
+					accumulate = 0;
+				}
+				accumulate = accumulate + Accel_Z_RAW / 256;
+				if (accumulate > 16){
+					mousehid.wheel = 1;
+					accumulate = 0;
+					USBD_HID_SendReport(&hUsbDeviceFS, &mousehid, sizeof (mousehid));
+				}else if(accumulate < -16){
+					mousehid.wheel = -1;
+					accumulate = 0;
+					USBD_HID_SendReport(&hUsbDeviceFS, &mousehid, sizeof (mousehid));
+				}
+				thirdbutton = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_7);
+				MPU6050_Read_Accel();
+				HAL_Delay(50);
+			}
+			mousehid.wheel = 0;
+		}else{
+			divider_level = divider_level + 1;
+			if(divider_level == 7){
+				divider_level= 0;
+			}
 		}
-		HAL_Delay (50);  // wait for a while
 	}else{
 		USBD_HID_SendReport(&hUsbDeviceFS, &mousehid, sizeof (mousehid));
 	}
